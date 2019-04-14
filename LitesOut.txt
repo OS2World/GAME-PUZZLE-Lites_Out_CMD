@@ -1,0 +1,247 @@
+                                Lights Out!
+                            for MS-DOS and OS/2
+                               version 1.01
+
+                             by William McBrine
+                 Written 1995; Placed in the Public Domain
+
+
+:::: INTRODUCTION ::::
+
+This is a simple PC implementation of Tiger Electronics' new $25 hand-held
+electronic game "Lights Out".  By now, you might've seen the TV ads.  I
+discovered it on one of those home shopping channels, where they said that
+Games Magazine had called it "the answer to Rubik's Cube".  I looked up the
+review in the August '95 issue, and it was so simple that I wrote my own
+version, based solely on the description in Games.
+
+
+:::: PLAY ::::
+
+There's a 5x5 grid of square lights, which are either on or off.  The
+object of the game is to turn them all off.  You do this by clicking on any
+square with the mouse.  Each click toggles the on/off state of that light,
+as well as those four which are immediately above, below, to the right, and
+to the left, in a cross pattern.
+
+In my implementation, you always start with a random grid (and in a random
+color).  Not all patterns are solvable (see Notes for more on this).  If
+you wish, you can recompile the program with an always-solvable init
+procedure (see Notes, and LITESOUT.PAS).
+
+The program keeps a tally of games played and won during this session, as
+well as the number of clicks (steps) made in the current game, and the
+lights which are currently illuminated.
+
+As you play, you'll learn to recognize patterns which can lead to
+solutions.  Games suggests, "One good approach is to try to concentrate the
+lighted bulbs into a single group and then maneuver that group into a
+corner."  I found this advice to be of limited utility, however.
+
+When you get fed up with a particular game, click in the general area of
+the word "Restart" (to the left of the board) for a new, random game.  If
+you just want to change the color scheme, click on "Change Color" to cycle
+through the possibilities.  Click "Quit" to end the session.
+
+
+:::: NOTES ::::
+
+The response to the initial release, while small, has been gratifying.
+First, I received this code in email:
+
+---------------------------------------------------------------------------
+Date: Wed, 6 Dec 95 00:59:13+030
+From: Max Yugaldin <max@landau.niif.spb.su>
+To: wmcbrine@clark.net
+Subject: about litesout v1
+
+To make all patterns solvable change init procedure in your
+program litesout.pas v.1.0:
+
+procedure init;  { Solvable init }
+const difficulty=25;
+ begin
+   for x:=0 to xelems-1 do 
+     for y:=0 to yelems-1 do
+       lites[x,y]:=false;
+   for x:=1 to difficulty do hitone(random(xelems),random(yelems));
+   lights:=0;
+   for x:=0 to xelems-1 do
+     for y:=0 to yelems-1 do
+       if lites[x,y] then inc(lights);
+ end;
+---------------------------------------------------------------------------
+
+This ensures that all patterns are solvable by setting up a series of
+reversible moves.  With the standard random init, only some games are
+solvable (as explained below).  I've included this in the source code file
+as an option, but you'll have to recompile to use it.  (I'll probably make
+it easier in the next version.)
+
+Just yesterday, I got this thorough analysis of the game (some quoted
+material is from the first version of the documentation, since removed):
+
+---------------------------------------------------------------------------
+Date: Sat, 23 Dec 1995 21:59:15 +0100
+From: Eberhard Mattes <mattes@azu.informatik.uni-stuttgart.de>
+To: William McBrine <wmcbrine@clark.net>
+Subject: Lights Out!
+
+| Games Magazine had called it "the answer to Rubik's Cube".
+
+It's much simpler than Rubik's Cube.  I'm sure that I'm not the first
+one to point out the following (sorry:-)...  [As a matter of fact, you
+were. -- WM]
+
+There are 2^25 possible games.  If it can be solved, it can be solved
+in at most 25 steps.  (For each light, you've either clicked on it or
+not.)  Each sequence of more than 25 steps is equivalent to a sequence
+of 25 or less steps.
+
+I wrote a simple brute force program which just tries all possible
+2^25 sequences of moves.  It took 96 seconds on my 90MHz pentium to
+find all solvable games (including their solution).  (With a bit of
+mathematics it should be possible to compute a solution directly,
+without brute force.)
+
+Here are the results:
+
+  Total number of games: 33554432
+  Solvable games:         8388608
+  Insoluble games:       25165824
+
+| I usually have no trouble getting down to a single light -- at which
+| point I have to restart, because I've never found a way to get rid of
+| a solitary light.
+
+There are two lights (5, if you take symmetry into account) which you
+can toggle without changing any other light:
+
+********** Moves: **********
+-X-X-
+XX-XX
+---X-
+XXX--
+-X---
+********** Output: **********
+-----
+-X---
+-----
+-----
+-----
+
+********** Moves: **********
+-XX-X
+X---X
+X-XX-
+--X--
+XX---
+********** Output: **********
+-----
+-----
+--X--
+-----
+-----
+
+That is, to toggle the center light, click on all the 11 lights marked
+`X' in the board above (the sequence does not matter, of course --
+that's the weak point of the game).
+
+All other 20 instances of one light being left are not solvable.
+
+In consequence, all games having n lights on with exactly 1 light of
+the 20 insoluble ones, and n-1 of the solvable ones, are insoluble.
+For instance,
+
+-----
+-----
+--XX-
+-----
+-----
+
+is insoluble.
+
+| Wins are occasional.
+
+25%, see above.
+
+Perhaps your program should generate only solvable games...
+
+-- 
+  Eberhard Mattes <mattes@azu.informatik.uni-stuttgart.de>
+---------------------------------------------------------------------------
+
+With his closing line, he echoes the suggestion of Max Yugaldin.
+
+The first of the togglable solitary lights Eberhard Mattes describes is one
+I had also discovered myself (after I wrote that I hadn't found a way to
+get rid of any such).  The other was new to me.
+
+If anyone cares to comment on this analysis, I'd love to hear from you.
+
+Some features of the hand-held game are missing in this version, such as
+the prearranged puzzles (which I didn't have access to), and the save-game
+feature (hey, I'm lazy).  On the other hand, with mine you can change
+colors.  :-) It also urges you to rest after every 500 clicks... because I
+got a sore wrist playing this thing.  And I'm including the source, in case
+you want to modify it.  (For instance, you can change the size of the grid
+just by adjusting a few constants.  I've played on 4x4, 6x6, and other
+sizes.)  It has no comments to speak of, though.
+
+Known bugs:  For reasons as yet unclear, when you first move the mouse, a
+garbage character sometimes appears in the upper left corner.  You can
+clear this up by quitting and restarting.
+
+MSDOS and OS/2 executables are included.
+
+
+:::: HISTORY ::::
+
+ 1.01 12/24/95   Added solvable init by Max Yugaldin, analysis by Eberhard
+                 Mattes.
+
+				 The 500-click warning message was not being printed in the
+                 right place.
+
+ 1.0  11/04/95   Initial release.
+
+
+:::: WHERE TO REACH ME ::::
+
+Internet: wmcbrine@clark.net
+US Mail:  William McBrine
+          8128 Fenwick Ct.
+          Laurel, MD 20707-5615
+
+Anonymous FTP to:
+
+ftp.clark.net:/pub/wmcbrine/
+
+or on the World Wide Web at:
+
+http://www.clark.net/pub/wmcbrine/html/
+
+
+:::: ACKNOWLEDGEMENTS ::::
+
+Inspiration:   Tiger Electronics.
+
+Specs:         Games Magazine.
+
+Alpha tester:  My sister, Marian McBrine <mcbanm3l@wfu.edu>.  Talk to her
+               if you want to talk games.  (Heck, it was her magazine.)
+
+Contributors:  Max Yugaldin <max@landau.niif.spb.su>,
+               Eberhard Mattes <mattes@azu.informatik.uni-stuttgart.de>
+
+
+
+::FILES::
+Files included in this package should be:
+
+LITES2   EXE     29712 OS/2 text-mode executable
+LITESOUT EXE     10576 MSDOS executable
+LITESOUT PAS      6984 Pascal source code
+LITESOUT TXT      7903 Documentation
+
+Time and date on all files should be 12-24-95, 1:01am
